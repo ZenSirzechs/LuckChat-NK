@@ -1,5 +1,5 @@
 name: LuckChat
-version: "${pom.version}"
+version: "${project.version}"
 api: ["1.0.0"]
 author: Zen
 main: zen.luckchat.LuckChatPlugin

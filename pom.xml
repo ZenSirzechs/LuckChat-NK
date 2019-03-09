@@ -7,6 +7,7 @@
     <groupId>zen.luckchat</groupId>
     <artifactId>luckchat</artifactId>
     <version>1.2-Beta</version>
+    <name>LuckChat</name>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
