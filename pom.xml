@@ -45,6 +45,14 @@
             <systemPath>${basedir}/lib/Factions.jar</systemPath>
         </dependency>
         <dependency>
+            <groupId>me.onebone</groupId>
+            <artifactId>economyapi</artifactId>
+            <version>1.0.1</version>
+            <optional>false</optional>
+            <scope>system</scope>
+            <systemPath>${basedir}/lib/EconomyAPI.jar</systemPath>
+        </dependency>
+        <dependency>
             <groupId>com.creeperface.nukkit.placeholderapi</groupId>
             <artifactId>PlaceholderAPI</artifactId>
             <version>1.0-SNAPSHOT</version>
