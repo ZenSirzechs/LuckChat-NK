@@ -2,6 +2,6 @@ name: LuckChat
 version: "${pom.version}"
 api: ["1.0.0"]
 author: Zen
-main: zen.luckchat.Main
+main: zen.luckchat.LuckChatPlugin
 Depend: ["LuckPerms"]
-Softdepend: ["PlaceholderAPI"]
+Softdepend: ["PlaceholderAPI", "Factions"]
