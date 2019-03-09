@@ -95,6 +95,7 @@ public class LuckChatPlugin extends PluginBase implements Listener {
                 .replace("%disname%", name)
                 .replace("%prefix%", prefix)
                 .replace("%suffix%", suffix)
+                .replace("%money%", getMoney(p))
                 .replace("%msg%", message));
 
         if (placeholderApi != null) {
@@ -107,5 +108,14 @@ public class LuckChatPlugin extends PluginBase implements Listener {
             msg = msg.replace("%faction%", "");
         }
         e.setFormat(TextFormat.colorize('&', msg));
+    }
+
+    public static String getMoney(Player p) {
+        try {
+            Class.forName("me.onebone.economyapi.EconomyAPI");
+            return Double.toString(me.onebone.economyapi.EconomyAPI.getInstance().myMoney(p));
+        } catch (Exception ex) {
+            return "EconomyAPI not found";
+        }
     }
 }
