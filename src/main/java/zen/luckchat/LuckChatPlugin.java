@@ -18,11 +18,10 @@ import me.lucko.luckperms.api.caching.MetaData;
 
 public class LuckChatPlugin extends PluginBase implements Listener {
 
-    private LuckPermsApi luckPerms = null;
-    private PlaceholderAPI placeholderApi = null;
-    private P factions = null;
-    private Config config;
-    private Config groups;
+    public static LuckPermsApi luckPerms = null;
+    public static PlaceholderAPI placeholderApi = null;
+    public static P factions = null;
+    public static Config config;
 
     public void onEnable() {
         this.saveDefaultConfig();
@@ -54,20 +53,21 @@ public class LuckChatPlugin extends PluginBase implements Listener {
             // ignore
         }
 
-        groups = new Config(getDataFolder() + "/groups.yml", Config.YAML);
+
         if (config.getBoolean("FirstRun")){
             this.getServer().getLogger().info(TextFormat.AQUA+"Configuring first run...");
 
             for (Group g : luckPerms.getGroups()) {
                 String group = g.getName();
-                groups.set(group, "[%name%] >> %msg%");
+                config.set("Chat."+group, "[%name%] >> %msg%");
+                config.set("NameTag."+group, "%name%");
                 this.getServer().getLogger().info(TextFormat.LIGHT_PURPLE+"Fetching group: " + group);
                 config.set("FirstRun", false);
                 config.save();
-                groups.save();
             }
         }
         this.getServer().getPluginManager().registerEvents(this, this);
+        this.getServer().getScheduler().scheduleDelayedRepeatingTask(this, new NameTag(this), config.getInt("NameTag.update"), config.getInt("NameTag.update"));
         this.getServer().getLogger().info(TextFormat.AQUA+"Starting chat listener..");
     }
 
@@ -90,11 +90,12 @@ public class LuckChatPlugin extends PluginBase implements Listener {
         prefix = prefix != null ? prefix : "";
 
         String perm = user.getPrimaryGroup();
-        String msg = (groups.getString(perm)
+        String msg = (config.getString("Chat."+perm)
                 .replace("%name%", p.getName())
                 .replace("%disname%", name)
                 .replace("%prefix%", prefix)
                 .replace("%suffix%", suffix)
+                .replace("%group%", perm)
                 .replace("%money%", getMoney(p))
                 .replace("%msg%", message));
 
