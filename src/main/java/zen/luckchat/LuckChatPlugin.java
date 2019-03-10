@@ -67,7 +67,7 @@ public class LuckChatPlugin extends PluginBase implements Listener {
             }
         }
         this.getServer().getPluginManager().registerEvents(this, this);
-        this.getServer().getScheduler().scheduleDelayedRepeatingTask(this, new NameTag(this), config.getInt("NameTag.update"), config.getInt("NameTag.update"));
+        this.getServer().getScheduler().scheduleDelayedRepeatingTask(this, new NameTag(this), config.getInt("NameTag.update", 20), config.getInt("NameTag.update", 20));
         this.getServer().getLogger().info(TextFormat.AQUA+"Starting chat listener..");
     }
 
