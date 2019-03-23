@@ -30,7 +30,7 @@ public class LuckChatPlugin extends PluginBase implements Listener {
         // Get LuckPerms API
         try {
             luckPerms = LuckPerms.getApiSafe().orElse(null);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             // ignore
         }
         if (luckPerms == null) {
@@ -42,14 +42,14 @@ public class LuckChatPlugin extends PluginBase implements Listener {
         // Check for Placeholder API
         try {
             placeholderApi = PlaceholderAPI.getInstance();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             // ignore
         }
 
         // Check for Factions
         try {
             factions = P.p;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             // ignore
         }
 
