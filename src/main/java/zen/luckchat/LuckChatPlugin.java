@@ -94,7 +94,11 @@ public class LuckChatPlugin extends PluginBase implements Listener {
                 .replace("%name%", p.getName())
                 .replace("%disname%", name)
                 .replace("%prefix%", prefix)
-                .replace("%suffix%", suffix)
+                .replace("%suffix%", suffix)                
+                .replace("%player_max_health%", String.valueOf(p.getMaxHealth()))
+                .replace("%player_health%", String.valueOf(p.getHealth()))
+                .replace("%player_food%", String.valueOf(p.getFoodData().getLevel()))
+                .replace("%player_saturation%", String.valueOf(p.getFoodData().getFoodSaturationLevel()))
                 .replace("%group%", perm)
                 .replace("%money%", getMoney(p))
                 .replace("%msg%", message));
