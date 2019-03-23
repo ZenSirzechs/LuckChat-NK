@@ -6,7 +6,7 @@
 
     <groupId>zen.luckchat</groupId>
     <artifactId>luckchat</artifactId>
-    <version>1.4-Beta</version>
+    <version>1.6-Beta</version>
     <name>LuckChat</name>
 
     <properties>
