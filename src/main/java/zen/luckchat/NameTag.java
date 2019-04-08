@@ -10,6 +10,8 @@ import me.lucko.luckperms.api.caching.MetaData;
 
 import static zen.luckchat.LuckChatPlugin.getMoney;
 
+import static zen.luckchat.LuckChatPlugin.*;
+
 public class NameTag extends Thread {
 
     private LuckChatPlugin plugin;
@@ -43,6 +45,7 @@ public class NameTag extends Thread {
                     .replace("%prefix%", prefix)
                     .replace("%suffix%", suffix)
                     .replace("%group%", perm)
+                    .replace("%device%", getOS(p))
                     .replace("%money%", getMoney(p)));
 
             if (LuckChatPlugin.placeholderApi != null) {
