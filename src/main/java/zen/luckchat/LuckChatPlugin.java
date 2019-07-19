@@ -8,7 +8,6 @@ import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.utils.Config;
 import cn.nukkit.utils.TextFormat;
 import com.creeperface.nukkit.placeholderapi.api.PlaceholderAPI;
-import com.massivecraft.factions.P;
 import me.lucko.luckperms.LuckPerms;
 import me.lucko.luckperms.api.Contexts;
 import me.lucko.luckperms.api.Group;
@@ -18,14 +17,13 @@ import me.lucko.luckperms.api.caching.MetaData;
 
 public class LuckChatPlugin extends PluginBase implements Listener {
 
-    public static LuckPermsApi luckPerms = null;
-    public static PlaceholderAPI placeholderApi = null;
-    public static P factions = null;
-    public static Config config;
+    static LuckPermsApi luckPerms = null;
+    static PlaceholderAPI placeholderApi = null;
+    static Config config;
 
     public void onEnable() {
         this.saveDefaultConfig();
-        this.config = this.getConfig();
+        config = this.getConfig();
 
         // Get LuckPerms API
         try {
@@ -45,14 +43,6 @@ public class LuckChatPlugin extends PluginBase implements Listener {
         } catch (Throwable e) {
             // ignore
         }
-
-        // Check for Factions
-        try {
-            factions = P.p;
-        } catch (Throwable e) {
-            // ignore
-        }
-
 
         if (config.getBoolean("FirstRun")){
             this.getServer().getLogger().info(TextFormat.AQUA+"Configuring first run...");
@@ -97,22 +87,17 @@ public class LuckChatPlugin extends PluginBase implements Listener {
                 .replace("%suffix%", suffix)
                 .replace("%group%", perm)
                 .replace("%money%", getMoney(p))
+                .replace("%faction%", getFaction(p))
                 .replace("%device%", getOS(p))
                 .replace("%msg%", message));
 
         if (placeholderApi != null) {
             msg = placeholderApi.translateString(msg, p);
         }
-        if (factions != null) {
-            String faction = P.p.getPlayerFactionTag(p);
-            msg = msg.replace("%faction%", faction);
-        } else {
-            msg = msg.replace("%faction%", "");
-        }
         e.setFormat(TextFormat.colorize('&', msg));
     }
 
-    public static String getMoney(Player p) {
+    static String getMoney(Player p) {
         try {
             Class.forName("me.onebone.economyapi.EconomyAPI");
             return Double.toString(me.onebone.economyapi.EconomyAPI.getInstance().myMoney(p));
@@ -120,8 +105,17 @@ public class LuckChatPlugin extends PluginBase implements Listener {
             return "EconomyAPI not found";
         }
     }
+
+    static String getFaction(Player p) {
+        try {
+            Class.forName("com.massivecraft.factions.P");
+            return com.massivecraft.factions.P.p.getPlayerFactionTag(p);
+        } catch (Exception ex) {
+            return "Faction not found";
+        }
+    }
     
-    public static String getOS(Player p) {
+    static String getOS(Player p) {
         switch (p.getLoginChainData().getDeviceOS()) {
             case 1:
                 return "Android";
