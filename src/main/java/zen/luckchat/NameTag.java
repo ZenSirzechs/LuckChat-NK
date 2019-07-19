@@ -1,14 +1,10 @@
 package zen.luckchat;
 
 import cn.nukkit.Player;
-
 import cn.nukkit.utils.TextFormat;
-import com.massivecraft.factions.P;
 import me.lucko.luckperms.api.Contexts;
 import me.lucko.luckperms.api.User;
 import me.lucko.luckperms.api.caching.MetaData;
-
-import static zen.luckchat.LuckChatPlugin.getMoney;
 
 import static zen.luckchat.LuckChatPlugin.*;
 
@@ -16,7 +12,7 @@ public class NameTag extends Thread {
 
     private LuckChatPlugin plugin;
 
-    public NameTag(LuckChatPlugin plugin) {
+    NameTag(LuckChatPlugin plugin) {
         this.plugin = plugin;
         setName("NameTag");
     }
@@ -46,16 +42,11 @@ public class NameTag extends Thread {
                     .replace("%suffix%", suffix)
                     .replace("%group%", perm)
                     .replace("%device%", getOS(p))
+                    .replace("%faction%", getFaction(p))
                     .replace("%money%", getMoney(p)));
 
             if (LuckChatPlugin.placeholderApi != null) {
                 tag = LuckChatPlugin.placeholderApi.translateString(tag, p);
-            }
-            if (LuckChatPlugin.factions != null) {
-                String faction = P.p.getPlayerFactionTag(p);
-                tag = tag.replace("%faction%", faction);
-            } else {
-                tag = tag.replace("%faction%", "");
             }
             p.setNameTag(TextFormat.colorize('&', tag));
         }
