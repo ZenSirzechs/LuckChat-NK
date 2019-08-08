@@ -66,6 +66,11 @@ public class LuckChatPlugin extends PluginBase implements Listener {
         Player p = e.getPlayer();
         String name = p.getDisplayName();
         String message = e.getMessage();
+
+        if (message.contains("%--t")){
+            message = message.replace("%--t", "").trim();
+        }
+
         User user = luckPerms.getUser(p.getUniqueId());
         if (user == null) {
             this.getLogger().warning("An error occurred when attempting to retrieve " + p.getName() + "'s user data!");
