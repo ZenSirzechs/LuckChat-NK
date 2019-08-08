@@ -2,7 +2,6 @@ package zen.luckchat;
 
 import cn.nukkit.Player;
 import cn.nukkit.utils.TextFormat;
-import me.lucko.luckperms.api.Contexts;
 import me.lucko.luckperms.api.User;
 import me.lucko.luckperms.api.caching.MetaData;
 
@@ -26,15 +25,12 @@ public class NameTag extends Thread {
                 plugin.getLogger().warning("An error occurred when attempting to retrieve " + p.getName() + "'s user data!");
                 return;
             }
-            Contexts contexts = LuckChatPlugin.luckPerms.getContextManager().getApplicableContexts(p);
-            MetaData metaData = user.getCachedData().getMetaData(contexts);
 
-            String prefix = metaData.getPrefix();
-            String suffix = metaData.getSuffix();
-            suffix = suffix != null ? suffix : "";
-            prefix = prefix != null ? prefix : "";
-
+            MetaData metaData = user.getCachedData().getMetaData(luckPerms.getContextManager().getApplicableContexts(p));
+            String prefix = metaData.getPrefix() != null ? metaData.getPrefix() : "";
+            String suffix = metaData.getSuffix() != null ? metaData.getSuffix() : "";
             String perm = user.getPrimaryGroup();
+
             String tag = (LuckChatPlugin.config.getString("NameTag."+perm)
                     .replace("%name%", p.getName())
                     .replace("%disname%", name)

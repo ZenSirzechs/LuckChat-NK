@@ -9,7 +9,6 @@ import cn.nukkit.utils.Config;
 import cn.nukkit.utils.TextFormat;
 import com.creeperface.nukkit.placeholderapi.api.PlaceholderAPI;
 import me.lucko.luckperms.LuckPerms;
-import me.lucko.luckperms.api.Contexts;
 import me.lucko.luckperms.api.Group;
 import me.lucko.luckperms.api.LuckPermsApi;
 import me.lucko.luckperms.api.User;
@@ -20,48 +19,51 @@ public class LuckChatPlugin extends PluginBase implements Listener {
     static LuckPermsApi luckPerms = null;
     static PlaceholderAPI placeholderApi = null;
     static Config config;
+    private static String pf = (TextFormat.WHITE + "[ " + TextFormat.AQUA + "Luck" + TextFormat.DARK_AQUA + "Chat" + TextFormat.WHITE + " ]" + TextFormat.DARK_AQUA);
 
     public void onEnable() {
-        this.saveDefaultConfig();
-        config = this.getConfig();
+        saveDefaultConfig();
+        config = getConfig();
 
         // Get LuckPerms API
         try {
             luckPerms = LuckPerms.getApiSafe().orElse(null);
         } catch (Throwable e) {
-            // ignore
-        }
-        if (luckPerms == null) {
-            this.getLogger().emergency("Unable to get LuckPerms API! Disabling...");
-            this.getServer().getPluginManager().disablePlugin(this);
+            getLogger().emergency("Unable to get LuckPerms API! Disabling...");
+            getServer().getPluginManager().disablePlugin(this);
             return;
         }
 
         // Check for Placeholder API
         try {
             placeholderApi = PlaceholderAPI.getInstance();
-        } catch (Throwable e) {
-            // ignore
+        } catch (Throwable ignored) {
         }
 
-        if (config.getBoolean("FirstRun")){
-            this.getServer().getLogger().info(TextFormat.AQUA+"Configuring first run...");
-
+        if (config.getBoolean("FirstRun", true)){
+            getServer().getLogger().info("\n" + pf + " Configuring first run... \n\n");
             for (Group g : luckPerms.getGroups()) {
                 String group = g.getName();
                 config.set("Chat."+group, "[%name%] >> %msg%");
                 config.set("NameTag."+group, "%name%");
-                this.getServer().getLogger().info(TextFormat.LIGHT_PURPLE+"Fetching group: " + group);
-                config.set("FirstRun", false);
-                config.save();
+                getServer().getLogger().info(pf + TextFormat.LIGHT_PURPLE+" Fetching group: " + group);
             }
+            config.set("FirstRun", false);
+            config.save();
+            getServer().getLogger().info(pf + " First run configured. \n\n");
         }
-        this.getServer().getPluginManager().registerEvents(this, this);
-        this.getServer().getScheduler().scheduleDelayedRepeatingTask(this, new NameTag(this), config.getInt("NameTag.update", 20), config.getInt("NameTag.update", 20));
-        this.getServer().getLogger().info(TextFormat.AQUA+"Starting chat listener..");
+
+        getServer().getScheduler().scheduleDelayedRepeatingTask(this, new NameTag(this),
+                config.getInt("NameTag.update", 20),
+                config.getInt("NameTag.update", 20),
+                config.getBoolean("NameTag.updateAsync", true));
+        getServer().getLogger().info("\n" + pf + " Loaded " + config.getSection("Chat").getKeys().size()
+                + " chat formats and " + (config.getSection("NameTag").getKeys().size() - 2)
+                + " NameTag formats. \n" + pf + " Starting chat listener.. \n\n");
+        getServer().getPluginManager().registerEvents(this, this);
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onChat(PlayerChatEvent e) {
         Player p = e.getPlayer();
         String name = p.getDisplayName();
@@ -69,18 +71,14 @@ public class LuckChatPlugin extends PluginBase implements Listener {
 
         User user = luckPerms.getUser(p.getUniqueId());
         if (user == null) {
-            this.getLogger().warning("An error occurred when attempting to retrieve " + p.getName() + "'s user data!");
+            getLogger().warning("An error occurred when attempting to retrieve " + p.getName() + "'s user data!");
             return;
         }
-        Contexts contexts = luckPerms.getContextManager().getApplicableContexts(p);
-        MetaData metaData = user.getCachedData().getMetaData(contexts);
-
-        String prefix = metaData.getPrefix();
-        String suffix = metaData.getSuffix();
-        suffix = suffix != null ? suffix : "";
-        prefix = prefix != null ? prefix : "";
-
+        MetaData metaData = user.getCachedData().getMetaData(luckPerms.getContextManager().getApplicableContexts(p));
+        String prefix = metaData.getPrefix() != null ? metaData.getPrefix() : "";
+        String suffix = metaData.getSuffix() != null ? metaData.getSuffix() : "";
         String perm = user.getPrimaryGroup();
+
         String msg = (config.getString("Chat."+perm)
                 .replace("%name%", p.getName())
                 .replace("%disname%", name)
