@@ -1,4 +1,5 @@
 FirstRun: true
+ChatAsync: true
 Chat:
 NameTag:
   update: 20
