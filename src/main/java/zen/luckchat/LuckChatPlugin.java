@@ -19,7 +19,7 @@ public class LuckChatPlugin extends PluginBase implements Listener {
 
     static byte hook = 0;
     static PlaceholderAPI placeholderApi = null;
-    static Config config;
+    public static Config config;
     private static String pf = (TextFormat.WHITE + "[ " + TextFormat.AQUA + "Luck" + TextFormat.DARK_AQUA + "Chat" + TextFormat.WHITE + " ]" + TextFormat.DARK_AQUA);
 
     public void onEnable() {
