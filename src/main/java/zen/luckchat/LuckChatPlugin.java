@@ -9,25 +9,23 @@ import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.utils.Config;
 import cn.nukkit.utils.TextFormat;
 import com.creeperface.nukkit.placeholderapi.api.PlaceholderAPI;
-import me.lucko.luckperms.LuckPerms;
-import me.lucko.luckperms.api.Group;
-import me.lucko.luckperms.api.caching.MetaData;
+import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.cacheddata.CachedMetaData;
+import net.luckperms.api.model.group.Group;
 
 public class LuckChatPlugin extends PluginBase implements Listener {
 
-    static byte hook = 0;
     static PlaceholderAPI placeholderApi = null;
+    static LuckPerms api;
     public static Config config;
-    private static String pf = (TextFormat.WHITE + "[ " + TextFormat.AQUA + "Luck" + TextFormat.DARK_AQUA + "Chat" + TextFormat.WHITE + " ]" + TextFormat.DARK_AQUA);
+    private static final String pf = (TextFormat.WHITE + "[ " + TextFormat.AQUA + "Luck" + TextFormat.DARK_AQUA + "Chat" + TextFormat.WHITE + " ]" + TextFormat.DARK_AQUA);
 
     public void onEnable() {
         saveDefaultConfig();
         config = getConfig();
 
         checkAPIHook();
-
 
         // Check for Placeholder API
         try {
@@ -38,22 +36,13 @@ public class LuckChatPlugin extends PluginBase implements Listener {
         if (config.getBoolean("FirstRun", true)) {
             getServer().getLogger().info("\n" + pf + " Configuring first run... \n\n");
 
-            if (hook == 1) {
-                for (Group g : LuckPerms.getApi().getGroups()) {
-                    String group = g.getName();
-                    config.set("Chat." + group, "[%name%] >> %msg%");
-                    config.set("NameTag." + group, "%name%");
-                    getServer().getLogger().info(pf + TextFormat.LIGHT_PURPLE + " Fetching group: " + group);
-                }
-            } else {
-                for (net.luckperms.api.model.group.Group g : LuckPermsProvider.get().getGroupManager().getLoadedGroups()) {
-                    String group = g.getName();
-                    config.set("Chat." + group, "[%name%] >> %msg%");
-                    config.set("NameTag." + group, "%name%");
-                    getServer().getLogger().info(pf + TextFormat.LIGHT_PURPLE + " Fetching group: " + group);
-                }
-            }
 
+            for (Group g : api.getGroupManager().getLoadedGroups()) {
+                String group = g.getName();
+                config.set("Chat." + group, "[%name%] >> %msg%");
+                config.set("NameTag." + group, "%name%");
+                getServer().getLogger().info(pf + TextFormat.LIGHT_PURPLE + " Fetching group: " + group);
+            }
 
             config.set("FirstRun", false);
             config.save();
@@ -71,66 +60,66 @@ public class LuckChatPlugin extends PluginBase implements Listener {
     }
 
     @EventHandler(ignoreCancelled = true)
-    public void onChat(PlayerChatEvent e) {
-        String message = e.getMessage();
-        Player p = e.getPlayer();
-        String name = p.getDisplayName();;
+    public void onChat(PlayerChatEvent event) {
+        String message = event.getMessage();
+        Player player = event.getPlayer();
 
-        String prefix = getPrefix(p);
-        String suffix = getSuffix(p);
-        String perm = getGroup(p);
+        String perm = getGroup(player);
 
         String msg = (config.getString("Chat."+perm)
-                .replace("%name%", p.getName())
-                .replace("%disname%", name)
-                .replace("%prefix%", prefix)
-                .replace("%suffix%", suffix)
+                .replace("%%n", "\n")
+                .replace("%%r", "\r")
+                .replace("%%t", "\t")
+                .replace("%name%", player.getName())
+                .replace("%disname%", player.getDisplayName())
+                .replace("%prefix%", getPrefix(player))
+                .replace("%suffix%", getSuffix(player))
                 .replace("%group%", perm)
-                .replace("%money%", getMoney(p))
-                .replace("%faction%", getFaction(p))
-                .replace("%device%", getOS(p))
+                .replace("%money%", getMoney(player))
+                .replace("%faction%", getFaction(player))
+                .replace("%device%", getOS(player))
                 .replace("%msg%", message));
 
         if (placeholderApi != null) {
-            msg = placeholderApi.translateString(msg, p);
+            msg = placeholderApi.translateString(msg, player);
         }
 
         if (config.getBoolean("ChatAsync")) {
-            e.setCancelled();
+            event.setCancelled();
             String finalMsg = msg;
             
             this.getServer().getScheduler().scheduleTask(() -> {
-                for (Player player : this.getServer().getOnlinePlayers().values()) {
-                    player.sendMessage(TextFormat.colorize('&', finalMsg));
+                for (Player p : this.getServer().getOnlinePlayers().values()) {
+                    p.sendMessage(TextFormat.colorize('&', finalMsg));
                 }
                 Server.getInstance().getLogger().info(TextFormat.colorize('&', finalMsg));
             }, true);
 
         } else {
-            e.setFormat(TextFormat.colorize('&', msg));
+            event.setFormat(TextFormat.colorize('&', msg));
         }
     }
 
-    static String getMoney(Player p) {
+    static String getMoney(Player player) {
         try {
             Class.forName("me.onebone.economyapi.EconomyAPI");
-            return Double.toString(me.onebone.economyapi.EconomyAPI.getInstance().myMoney(p));
+            return Double.toString(me.onebone.economyapi.EconomyAPI.getInstance().myMoney(player));
         } catch (Exception ex) {
             return "EconomyAPI not found";
         }
     }
 
-    static String getFaction(Player p) {
+    static String getFaction(Player player) {
         try {
             Class.forName("com.massivecraft.factions.P");
-            return com.massivecraft.factions.P.p.getPlayerFactionTag(p);
+            return com.massivecraft.factions.P.p.getPlayerFactionTag(player);
         } catch (Exception ex) {
             return "Faction not found";
         }
     }
     
-    static String getOS(Player p) {
-        switch (p.getLoginChainData().getDeviceOS()) {
+    static String getOS(Player player) {
+        switch (player.getLoginChainData().getDeviceOS()) {
             case 1:
                 return "Android";
             case 2:
@@ -164,75 +153,34 @@ public class LuckChatPlugin extends PluginBase implements Listener {
 
     void checkAPIHook() {
 
-        if (this.getServer().getPluginManager().getPlugin("LuckPerms") != null) {
-
-            try {
-                Class.forName("me.lucko.luckperms.LuckPerms");
-                this.getServer().getLogger().info(TextFormat.GREEN + "LuckPerms v4 > detected ...");
-                hook = 1;
-            } catch (ClassNotFoundException e) {
-                this.getServer().getLogger().info(TextFormat.GREEN + "LuckPerms v5 < detected...");
-            }
-
-        } else {
+        if (this.getServer().getPluginManager().getPlugin("LuckPerms") == null) {
             this.getServer().getLogger().error(TextFormat.RED + "LuckPerms not found! Disabling ...");
             this.getServer().getPluginManager().disablePlugin(this);
+        } else {
+            api = LuckPermsProvider.get();
         }
 
     }
 
-    static String getGroup(Player p) {
-
-        String group = "";
-
-        try {
-            if (hook == 1) {
-                Class.forName("me.lucko.luckperms.LuckPerms");
-                group = LuckPerms.getApi().getUser(p.getUniqueId()).getPrimaryGroup();
-            } else {
-                Class.forName("net.luckperms.api.LuckPerms");
-                group = net.luckperms.api.LuckPermsProvider.get().getUserManager().getUser(p.getUniqueId()).getPrimaryGroup();
-            }
-        } catch (ClassNotFoundException ignored) {}
-
-        return group;
+    static String getGroup(Player player) {
+        return  api.getUserManager().getUser(player.getUniqueId()).getPrimaryGroup();
     }
 
-    static String getPrefix(Player p) {
+    static String getPrefix(Player player) {
 
-        String prefix = "";
+        CachedMetaData metaData = api.getUserManager()
+                .getUser(player.getUniqueId()).getCachedData()
+                .getMetaData(api.getContextManager().getQueryOptions(player));
 
-        try {
-            if (hook == 1) {
-                Class.forName("me.lucko.luckperms.LuckPerms");
-                MetaData metaData = LuckPerms.getApi().getUser(p.getUniqueId()).getCachedData().getMetaData(LuckPerms.getApi().getContextManager().getApplicableContexts(p));
-                prefix = metaData.getPrefix() != null ? metaData.getPrefix() : "";
-            } else {
-                Class.forName("net.luckperms.api.LuckPerms");
-                CachedMetaData metaData = LuckPermsProvider.get().getUserManager().getUser(p.getUniqueId()).getCachedData().getMetaData(LuckPermsProvider.get().getContextManager().getQueryOptions(p));
-                prefix = metaData.getPrefix() != null ? metaData.getPrefix() : "";
-            }
-        } catch (ClassNotFoundException ignored) {}
-
-        return prefix;
+        return metaData.getPrefix() != null ? metaData.getPrefix() : "";
     }
 
-    static String getSuffix(Player p) {
+    static String getSuffix(Player player) {
 
-        String suffix = "";
+        CachedMetaData metaData = api.getUserManager()
+                .getUser(player.getUniqueId()).getCachedData()
+                .getMetaData(api.getContextManager().getQueryOptions(player));
 
-        try {
-            if (hook == 1) {
-                Class.forName("me.lucko.luckperms.LuckPerms");
-                MetaData metaData = LuckPerms.getApi().getUser(p.getUniqueId()).getCachedData().getMetaData(LuckPerms.getApi().getContextManager().getApplicableContexts(p));
-                suffix = metaData.getSuffix() != null ? metaData.getSuffix() : "";
-            } else {
-                Class.forName("net.luckperms.api.LuckPerms");
-                CachedMetaData metaData = LuckPermsProvider.get().getUserManager().getUser(p.getUniqueId()).getCachedData().getMetaData(LuckPermsProvider.get().getContextManager().getQueryOptions(p));
-                suffix = metaData.getSuffix() != null ? metaData.getSuffix() : "";
-            }
-        } catch (ClassNotFoundException ignored) {}
-
-        return suffix;
+        return metaData.getSuffix() != null ? metaData.getSuffix() : "";
     }
 }

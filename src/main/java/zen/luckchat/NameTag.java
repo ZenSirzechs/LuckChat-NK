@@ -7,7 +7,7 @@ import static zen.luckchat.LuckChatPlugin.*;
 
 public class NameTag extends Thread {
 
-    private LuckChatPlugin plugin;
+    private final LuckChatPlugin plugin;
 
     NameTag(LuckChatPlugin plugin) {
         this.plugin = plugin;
@@ -16,29 +16,29 @@ public class NameTag extends Thread {
 
     @Override
     public void run() {
-        for (Player p : plugin.getServer().getOnlinePlayers().values()) {
-            String name = p.getDisplayName();
+        for (Player player : plugin.getServer().getOnlinePlayers().values()) {
 
-            String prefix = LuckChatPlugin.getPrefix(p);
-            String suffix = LuckChatPlugin.getSuffix(p);
-            String perm = LuckChatPlugin.getGroup(p);
+            String perm = LuckChatPlugin.getGroup(player);
 
-            String tag = (LuckChatPlugin.config.getString("NameTag."+perm)
-                    .replace("%name%", p.getName())
-                    .replace("%disname%", name)
-                    .replace("%prefix%", prefix)
-                    .replace("%suffix%", suffix)
+            String tag = (LuckChatPlugin.config.getString("NameTag." + perm)
+                    .replace("%%n", "\n")
+                    .replace("%%r", "\r")
+                    .replace("%%t", "\t")
+                    .replace("%name%", player.getName())
+                    .replace("%disname%", player.getDisplayName())
+                    .replace("%prefix%", LuckChatPlugin.getPrefix(player))
+                    .replace("%suffix%", LuckChatPlugin.getSuffix(player))
                     .replace("%group%", perm)
-                    .replace("%device%", getOS(p))
-                    .replace("%faction%", getFaction(p))
-                    .replace("%money%", getMoney(p)));
+                    .replace("%device%", getOS(player))
+                    .replace("%faction%", getFaction(player))
+                    .replace("%money%", getMoney(player)));
 
             if (LuckChatPlugin.placeholderApi != null) {
-                tag = LuckChatPlugin.placeholderApi.translateString(tag, p);
+                tag = LuckChatPlugin.placeholderApi.translateString(tag, player);
             }
 
-            if (!p.getNameTag().equals(TextFormat.colorize('&', tag))) {
-                p.setNameTag(TextFormat.colorize('&', tag));
+            if (!player.getNameTag().equals(TextFormat.colorize('&', tag))) {
+                player.setNameTag(TextFormat.colorize('&', tag));
             }
         }
     }
